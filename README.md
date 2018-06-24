@@ -23,6 +23,6 @@ sed -i "s@^nginx_modules_options=.*@nginx_modules_options='--add-module=../lua-n
 ```
 
 ### Copyright
-完全copy以下项目：
+完全copy以下项目:<br />
+https://github.com/loveshell/ngx_lua_waf<br />
 https://github.com/unixhot/waf
-https://github.com/loveshell/ngx_lua_waf

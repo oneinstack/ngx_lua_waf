@@ -20,6 +20,17 @@ export LUAJIT_LIB=/usr/local/lib
 export LUAJIT_INC=/usr/local/include/luajit-2.1
 sed -i "s@^nginx_modules_options=.*@nginx_modules_options='--add-module=../lua-nginx-module --add-module=../ngx_devel_kit'@" options.conf
 ./install.sh --nginx_option 1
+
+cat > /usr/local/nginx/conf/waf.conf << EOF
+lua_shared_dict limit 20m;
+lua_package_path "/usr/local/nginx/conf/waf/?.lua";
+init_by_lua_file "/usr/local/nginx/conf/waf/init.lua";
+access_by_lua_file "/usr/local/nginx/conf/waf/access.lua";
+EOF
+
+#vi /usr/local/nginx/conf/nginx.conf
+#include vhost/*.conf;下一行新增，如下
+include waf.conf;
 ```
 
 ### Copyright

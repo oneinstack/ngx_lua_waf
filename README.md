@@ -34,6 +34,6 @@ include waf.conf;
 ```
 
 ### Copyright
-完全copy以下项目:<br />
+copy以下项目:<br />
 https://github.com/loveshell/ngx_lua_waf<br />
 https://github.com/unixhot/waf

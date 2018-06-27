@@ -60,13 +60,15 @@ end
 function cc_attack_check()
     if config_cc_check == "on" then
         local USER_AGENT = get_user_agent()
-        local ATTACK_URL = ngx.var.host .. ngx.var.request_uri
+        --local ATTACK_URL = ngx.var.host .. ngx.var.request_uri
+        local ATTACK_URL = ngx.var.host .. ngx.var.uri
         local CC_TOKEN = get_client_ip() .. "." .. ngx.md5(ATTACK_URL .. USER_AGENT)
         local limit = ngx.shared.limit
         local CCcount=tonumber(string.match(config_cc_rate,'(.*)/'))
         local CCseconds=tonumber(string.match(config_cc_rate,'/(.*)'))
         local req,_ = limit:get(CC_TOKEN)
         if req then
+            --write('/data/wwwlogs/info.log',CC_TOKEN ..'\t'.. ATTACK_URL .. '\t'.. 'req: ' .. req .. "\n")
             if req > CCcount then
                 log_record('CC_Attack',ngx.var.request_uri,"-","-")
                 if config_waf_enable == "on" then

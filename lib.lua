@@ -48,7 +48,7 @@ function log_record(method,url,data,ruletag)
     local LOG_PATH = config_log_dir
     local CLIENT_IP = get_client_ip()
     local USER_AGENT = get_user_agent()
-    local SERVER_NAME = ngx.var.host 
+    local SERVER_NAME = ngx.var.host
     local LOCAL_TIME = ngx.localtime()
     local log_json_obj = {
                  client_ip = CLIENT_IP,
@@ -69,6 +69,18 @@ function log_record(method,url,data,ruletag)
     file:write(LOG_LINE.."\n")
     file:flush()
     file:close()
+end
+
+--test log
+function write(logfile, msg)
+    local fd,err = io.open(logfile,"a+")
+    if fd == nil then
+        ngx.log(ngx.ERR,"writefile msg : "..msg,err)
+        return
+    end
+    fd:write(msg)
+    fd:flush()
+    fd:close()
 end
 
 --WAF return

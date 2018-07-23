@@ -1,7 +1,12 @@
 ### ngx_lua_waf
 ngx_lua_waf是一个基于lua-nginx-module的web应用防火墙
 
-### 安装
+### OneinStack启用ngx_lua_waf 
+```
+~/oneinstack/addons.sh
+#install ngx_lua_waf
+```
+### 手工安装
 ```
 cd /root/oneinstack/src
 wget http://luajit.org/download/LuaJIT-2.1.0-beta3.tar.gz  #推荐2.1版本
@@ -18,12 +23,12 @@ make && make install
 cd ..
 export LUAJIT_LIB=/usr/local/lib
 export LUAJIT_INC=/usr/local/include/luajit-2.1
-sed -i "s@^nginx_modules_options=.*@nginx_modules_options='--add-module=../lua-nginx-module --add-module=../ngx_devel_kit'@" options.conf
+sed -i "s@^nginx_modules_options=.*@nginx_modules_options='--with-ld-opt=-Wl,-rpath,/usr/local/lib --add-module=../lua-nginx-module --add-module=../ngx_devel_kit'@" options.conf
 ./install.sh --nginx_option 1
 
 cat > /usr/local/nginx/conf/waf.conf << EOF
 lua_shared_dict limit 20m;
-lua_package_path "/usr/local/nginx/conf/waf/?.lua";
+lua_package_path "/usr/local/nginx/conf/waf/?.lua;;";
 init_by_lua_file "/usr/local/nginx/conf/waf/init.lua";
 access_by_lua_file "/usr/local/nginx/conf/waf/access.lua";
 EOF

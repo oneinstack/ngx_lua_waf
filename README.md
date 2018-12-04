@@ -1,5 +1,5 @@
 ### ngx_lua_waf
-ngx_lua_waf是一个基于lua-nginx-module的web应用防火墙
+ngx_lua_waf是一个基于lua-nginx-module的web应用防火墙, 支持验证码验证
 
 ### OneinStack启用ngx_lua_waf 
 ```
@@ -26,6 +26,7 @@ export LUAJIT_INC=/usr/local/include/luajit-2.1
 sed -i "s@^nginx_modules_options=.*@nginx_modules_options='--with-ld-opt=-Wl,-rpath,/usr/local/lib --add-module=../lua-nginx-module --add-module=../ngx_devel_kit'@" options.conf
 ./install.sh --nginx_option 1
 
+### 全局nginx新增waf
 cat > /usr/local/nginx/conf/waf.conf << EOF
 lua_shared_dict limit 20m;
 lua_package_path "/usr/local/nginx/conf/waf/?.lua;;";
@@ -36,6 +37,23 @@ EOF
 #vi /usr/local/nginx/conf/nginx.conf
 #include vhost/*.conf;下一行新增，如下
 include waf.conf;
+
+### 单网站新增waf(推荐)
+cat > /usr/local/nginx/conf/waf.conf << EOF
+lua_shared_dict limit 20m;
+lua_package_path "/usr/local/nginx/conf/waf/?.lua;;";
+init_by_lua_file "/usr/local/nginx/conf/waf/init.lua";
+EOF
+
+#vi /usr/local/nginx/conf/vhost/www.example.com.conf
+#location ~ [^/]\.php(/|$) {下一行新增，如下
+access_by_lua_file "/usr/local/nginx/conf/waf/access.lua";
+#注意：wordpress URL改成ngx.var.request_uri
+ 66         local ATTACK_URL = ngx.var.host .. ngx.var.uri
+ 67         -- local ATTACK_URL = ngx.var.host .. ngx.var.request_uri
+#改成：
+ 66         -- local ATTACK_URL = ngx.var.host .. ngx.var.uri
+ 67         local ATTACK_URL = ngx.var.host .. ngx.var.request_uri
 ```
 
 ### Copyright

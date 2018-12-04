@@ -1,6 +1,6 @@
-require 'init'
+require "init"
 
-function waf_main()
+local function waf_main()
     if black_ip_check() then
     elseif white_ip_check() then
     elseif white_url_check() then

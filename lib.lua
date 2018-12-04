@@ -1,9 +1,9 @@
---waf core lib
-require 'config'
+-- waf core lib
+require "config"
 
---Get the client IP
+-- Get the client IP
 function get_client_ip()
-    CLIENT_IP = ngx.req.get_headers()["X_real_ip"]
+    local CLIENT_IP = ngx.req.get_headers()["X_real_ip"]
     if CLIENT_IP == nil then
         CLIENT_IP = ngx.req.get_headers()["X_Forwarded_For"]
     end
@@ -16,24 +16,24 @@ function get_client_ip()
     return CLIENT_IP
 end
 
---Get the client user agent
+-- Get the client user agent
 function get_user_agent()
-    USER_AGENT = ngx.var.http_user_agent
+    local USER_AGENT = ngx.var.http_user_agent
     if USER_AGENT == nil then
        USER_AGENT = "unknown"
     end
     return USER_AGENT
 end
 
---Get WAF rule
+-- Get WAF rule
 function get_rule(rulefilename)
-    local io = require 'io'
+    local io = require "io"
     local RULE_PATH = config_rule_dir
     local RULE_FILE = io.open(RULE_PATH..'/'..rulefilename,"r")
     if RULE_FILE == nil then
         return
     end
-    RULE_TABLE = {}
+    local RULE_TABLE = {}
     for line in RULE_FILE:lines() do
         table.insert(RULE_TABLE,line)
     end
@@ -41,10 +41,10 @@ function get_rule(rulefilename)
     return(RULE_TABLE)
 end
 
---WAF log record for json,(use logstash codec => json)
+-- WAF log record for json,(use logstash codec => json)
 function log_record(method,url,data,ruletag)
     local cjson = require("cjson")
-    local io = require 'io'
+    local io = require "io"
     local LOG_PATH = config_log_dir
     local CLIENT_IP = get_client_ip()
     local USER_AGENT = get_user_agent()
@@ -71,7 +71,7 @@ function log_record(method,url,data,ruletag)
     file:close()
 end
 
---test log
+-- test log
 function write(logfile, msg)
     local fd,err = io.open(logfile,"a+")
     if fd == nil then
@@ -83,7 +83,7 @@ function write(logfile, msg)
     fd:close()
 end
 
---WAF return
+-- WAF return
 function waf_output()
     if config_waf_output == "redirect" then
         ngx.redirect(config_waf_redirect_url, 301)

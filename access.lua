@@ -1,5 +1,12 @@
 require "init"
 
+-- captcha url
+if ngx.re.match(ngx.var.request_uri,"^/captcha-waf.html","jo") then
+    ngx.header.content_type = "text/html"
+    ngx.say(config_waf_captcha_html)
+    ngx.exit(200)
+end
+
 local function waf_main()
     if black_ip_check() then
     elseif white_ip_check() then

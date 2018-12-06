@@ -14,7 +14,7 @@ function white_ip_check()
         if IP_WHITE_RULE ~= nil then
             for _,rule in pairs(IP_WHITE_RULE) do
                 if rule ~= "" and rulematch(WHITE_IP,rule,"jo") then
-                    -- log_record("White_IP",ngx.var_request_uri,"_","_")
+                    -- log_record("White_IP",ngx.var.request_uri,"_","_")
                     return true
                 end
             end
@@ -30,7 +30,7 @@ function black_ip_check()
         if IP_BLACK_RULE ~= nil then
             for _,rule in pairs(IP_BLACK_RULE) do
                 if rule ~= "" and rulematch(BLACK_IP,rule,"jo") then
-                    log_record('BlackList_IP',ngx.var_request_uri,"_","_")
+                    log_record('BlackList_IP',ngx.var.request_uri,"_","_")
                     if config_waf_enable == "on" then
                         ngx.header.content_type = "text/html"
                         ngx.say('Your IP blacklist, Please contact the administrator! ')
@@ -75,10 +75,10 @@ function cc_attack_check()
         if req then
             -- write("/data/wwwlogs/info.log",CC_TOKEN .."\t".. ATTACK_URL .. "\t".. "req: " .. req .."\n")
             if req > CCcount then
-                log_record("CC_Attack",ATTACK_URL,"-","-")
+                log_record("CC_Attack",ngx.var.request_uri,"-","-")
                 if config_waf_enable == "on" then
                     local source = ngx.encode_base64(ngx.var.scheme.."://"..ngx.var.host..ngx.var.request_uri)
-                    local dest = 'https://oneinstack.com/captcha.html' .. '?continue=' .. source
+                    local dest = '/captcha-waf.html' .. '?continue=' .. source
                     local CCcountcode,_ = math.modf(CCcount/2);
                     limit:set(CC_TOKEN,CCcountcode)
                     ngx.redirect(dest,302)
@@ -155,6 +155,7 @@ function url_args_attack_check()
     end
     return false
 end
+
 -- deny user agent
 function user_agent_attack_check()
     if config_user_agent_check == "on" then

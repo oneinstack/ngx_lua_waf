@@ -93,8 +93,8 @@ config_waf_captcha_html=[[
 					cache: false,
                     success: function(res){
 						var targetUrl = new URLSearchParams(location.search).get('continue')
-						//targetUrl = atob(targetUrl)
-						//location.href = targetUrl
+						targetUrl = atob(targetUrl)
+						location.href = targetUrl
                     },
                     error: function(e) {
 						location.reload()

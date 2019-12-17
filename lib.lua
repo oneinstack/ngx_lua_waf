@@ -3,9 +3,9 @@ require "config"
 
 -- Get the client IP
 function get_client_ip()
-    local CLIENT_IP = ngx.req.get_headers()["X_real_ip"]
+    local CLIENT_IP = ngx.req.get_headers(0)["X_real_ip"]
     if CLIENT_IP == nil then
-        CLIENT_IP = ngx.req.get_headers()["X_Forwarded_For"]
+        CLIENT_IP = ngx.req.get_headers(0)["X_Forwarded_For"]
     end
     if CLIENT_IP == nil then
         CLIENT_IP  = ngx.var.remote_addr

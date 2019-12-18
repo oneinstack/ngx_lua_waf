@@ -14,7 +14,7 @@ function white_ip_check()
         if IP_WHITE_RULE ~= nil then
             for _,rule in pairs(IP_WHITE_RULE) do
                 if rule ~= "" and rulematch(WHITE_IP,rule,"jo") then
-                    -- log_record("White_IP",ngx.var.request_uri,"_","_")
+                    log_record("White_IP",ngx.var.request_uri,"_","_")
                     return true
                 end
             end
@@ -30,7 +30,7 @@ function black_ip_check()
         if IP_BLACK_RULE ~= nil then
             for _,rule in pairs(IP_BLACK_RULE) do
                 if rule ~= "" and rulematch(BLACK_IP,rule,"jo") then
-                    log_record('BlackList_IP',ngx.var.request_uri,"_","_")
+                    -- log_record('BlackList_IP',ngx.var.request_uri,"_","_")                    
                     if config_waf_enable == "on" then
                         ngx.header.content_type = "text/html"
                         ngx.say('Your IP blacklist, Please contact the administrator! ')
@@ -49,7 +49,7 @@ function white_url_check()
         local REQ_URI = string.lower(ngx.var.request_uri)
         if URL_WHITE_RULES ~= nil then
             for _,rule in pairs(URL_WHITE_RULES) do
-                if rule ~= "" and rulematch(REQ_URI,rule,"jo") then
+                if rule ~= "" and rulematch(REQ_URI,string.lower(rule),"jo") then
                     return true
                 end
             end
@@ -76,6 +76,7 @@ function cc_attack_check()
             -- write("/data/wwwlogs/info.log",CC_TOKEN .."\t".. ATTACK_URL .. "\t".. "req: " .. req .."\n")
             if req > CCcount then
                 log_record("CC_Attack",ngx.var.request_uri,"-","-")
+                log_post_http("CC_Attack",ngx.var.request_uri,"-","-")
                 if config_waf_enable == "on" then
                     local source = ngx.encode_base64(ngx.var.scheme.."://"..ngx.var.host..ngx.var.request_uri)
                     local dest = '/captcha-waf.html' .. '?continue=' .. source
@@ -100,15 +101,15 @@ function cookie_attack_check()
         local USER_COOKIE = ngx.var.http_cookie
         if USER_COOKIE ~= nil then
             for _,rule in pairs(COOKIE_RULES) do
-                if rule ~="" and rulematch(USER_COOKIE,rule,"jo") then
-                    log_record("Deny_Cookie",ngx.var.request_uri,"-",rule)
+                if rule ~="" and rulematch(string.lower(USER_COOKIE),string.lower(rule),"jo") then
+                    log_record("Deny_Cookie",ngx.var.request_uri,"-",rule)                    
                     if config_waf_enable == "on" then
                         waf_output()
                         return true
                     end
                 end
              end
-	 end
+		end
     end
     return false
 end
@@ -117,10 +118,10 @@ end
 function url_attack_check()
     if config_url_check == "on" then
         local URL_RULES = get_rule("blackurl")
-        local REQ_URI = string.lower(ngx.var.request_uri)
+        local REQ_URI = ngx.var.request_uri
         for _,rule in pairs(URL_RULES) do
-            if rule ~="" and rulematch(REQ_URI,rule,"jo") then
-                log_record("Deny_URL",REQ_URI,"-",rule)
+            if rule ~="" and rulematch(string.lower(REQ_URI),string.lower(rule),"jo") then
+                log_record("Deny_URL",REQ_URI,"-",rule)                
                 if config_waf_enable == "on" then
                     waf_output()
                     return true
@@ -136,15 +137,23 @@ function url_args_attack_check()
     if config_url_args_check == "on" then
         local ARGS_RULES = get_rule('args')
         for _,rule in pairs(ARGS_RULES) do
-            local REQ_ARGS = ngx.req.get_uri_args()
+            --local REQ_ARGS = ngx.req.get_uri_args()
+			local REQ_ARGS, err = ngx.req.get_uri_args()
+			if err == "truncated" then				
+				log_record("URL_ARGS_MANY",ngx.var.request_uri,"-",rule)
+				if config_waf_enable == "on" then
+					waf_output()
+					return true
+				end
+			end
             for key, val in pairs(REQ_ARGS) do
                 if type(val) == "table" then
-                    local ARGS_DATA = table.concat(val, " ")
+                    ARGS_DATA = string.lower(table.concat(val, " "))
                 else
-                    local ARGS_DATA = val
+                    ARGS_DATA = string.lower(val)
                 end
-                if ARGS_DATA and type(ARGS_DATA) ~= "boolean" and rule ~="" and rulematch(unescape(ARGS_DATA),rule,"jo") then
-                    log_record("Deny_URL_Args",ngx.var.request_uri,"-",rule)
+                if ARGS_DATA and type(ARGS_DATA) ~= "boolean" and rule ~="" and rulematch(unescape(ARGS_DATA),string.lower(rule),"jo") then
+                    log_record("Deny_URL_Args",ngx.var.request_uri,"-",rule)                    
                     if config_waf_enable == "on" then
                         waf_output()
                         return true
@@ -163,8 +172,8 @@ function user_agent_attack_check()
         local USER_AGENT = ngx.var.http_user_agent
         if USER_AGENT ~= nil then
             for _,rule in pairs(USER_AGENT_RULES) do
-                if rule ~="" and rulematch(USER_AGENT,rule,"jo") then
-                    log_record("Deny_USER_AGENT",ngx.var.request_uri,"-",rule)
+                if rule ~="" and rulematch(string.lower(USER_AGENT),string.lower(rule),"jo") then
+                    log_record("Deny_USER_AGENT",ngx.var.request_uri,"-",rule)                    
                     if config_waf_enable == "on" then
                         waf_output()
                         return true
@@ -180,8 +189,31 @@ end
 function post_attack_check()
     if config_post_check == "on" then
         local POST_RULES = get_rule("post")
-        for _,rule in pairs(ARGS_RULES) do
-            local POST_ARGS = ngx.req.get_post_args()
+		ngx.req.read_body()        
+		for _,rule in pairs(POST_RULES) do			
+            -- local REQ_POST = ngx.req.get_post_args()
+			local REQ_POST, err = ngx.req.get_post_args()
+			if err == "truncated" then								
+				log_record("DENY_POST_MANY",ngx.var.request_uri,"-",rule)				
+				if config_waf_enable == "on" then
+					waf_output()
+					return true
+				end
+			end
+            for key, val in pairs(REQ_POST) do
+                if type(val) == "table" then
+                    POST_DATA = string.lower(table.concat(val, " "))
+                else
+                    POST_DATA = string.lower(val)
+                end
+                if POST_DATA and type(POST_DATA) ~= "boolean" and rule ~="" and rulematch(unescape(POST_DATA),string.lower(rule),"jo") then
+                    log_record("Deny_POST",ngx.var.request_uri,"-",rule)                    
+                    if config_waf_enable == "on" then
+                        waf_output()
+                        return true
+                    end
+                end
+            end
         end
         return true
     end

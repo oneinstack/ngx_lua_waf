@@ -54,7 +54,7 @@ function white_url_check()
                     local rule_str = string.sub(rule,1,2)
                     local from, to, err = rulematch(REQ_URI,string.lower(rule),"jo")
                     if rule_str == "\\." then
-                        local wfrom, wto, werr = rulematch(REQ_URI,"%?","jo")
+                        local wfrom, wto, werr = rulematch(unescape(REQ_URI),"%?","jo")
                         if from and REQ_URI_LEN == to and wfrom == nil then
                             return true
                         end

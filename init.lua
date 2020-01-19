@@ -49,8 +49,20 @@ function white_url_check()
         local REQ_URI = string.lower(ngx.var.request_uri)
         if URL_WHITE_RULES ~= nil then
             for _,rule in pairs(URL_WHITE_RULES) do
-                if rule ~= "" and rulematch(REQ_URI,string.lower(rule),"jo") then
-                    return true
+                if rule ~= "" then
+                    local REQ_URI_LEN = string.len(REQ_URI)
+                    local rule_str = string.sub(rule,1,2)
+                    local from, to, err = rulematch(REQ_URI,string.lower(rule),"jo")
+                    if rule_str == "\\." then
+                        local wfrom, wto, werr = rulematch(unescape(REQ_URI),"%?","jo")
+                        if from and REQ_URI_LEN == to and wfrom == nil then
+                            return true
+                        end
+                    elseif from and rule_str == "\\/" and from == 1 then
+                        return true
+                    elseif from and from == 2 then
+                        return true
+                    end
                 end
             end
         end

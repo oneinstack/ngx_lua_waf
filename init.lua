@@ -14,7 +14,7 @@ function white_ip_check()
         if IP_WHITE_RULE ~= nil then
             for _,rule in pairs(IP_WHITE_RULE) do
                 if rule ~= "" and rulematch(WHITE_IP,rule,"jo") then
-                    log_record("White_IP",ngx.var.request_uri,"_","_")
+                    -- log_record("White_IP",ngx.var.request_uri,"_","_")
                     return true
                 end
             end
@@ -88,7 +88,6 @@ function cc_attack_check()
             -- write("/data/wwwlogs/info.log",CC_TOKEN .."\t".. ATTACK_URL .. "\t".. "req: " .. req .."\n")
             if req > CCcount then
                 log_record("CC_Attack",ngx.var.request_uri,"-","-")
-                log_post_http("CC_Attack",ngx.var.request_uri,"-","-")
                 if config_waf_enable == "on" then
                     local source = ngx.encode_base64(ngx.var.scheme.."://"..ngx.var.host..ngx.var.request_uri)
                     local dest = '/captcha-waf.html' .. '?continue=' .. source
@@ -152,7 +151,7 @@ function url_args_attack_check()
             --local REQ_ARGS = ngx.req.get_uri_args()
 			local REQ_ARGS, err = ngx.req.get_uri_args()
 			if err == "truncated" then				
-				log_record("URL_ARGS_MANY",ngx.var.request_uri,"-",rule)
+				log_record("Deny_URL_Args_Many",ngx.var.request_uri,"-",rule)
 				if config_waf_enable == "on" then
 					waf_output()
 					return true
@@ -185,7 +184,7 @@ function user_agent_attack_check()
         if USER_AGENT ~= nil then
             for _,rule in pairs(USER_AGENT_RULES) do
                 if rule ~="" and rulematch(string.lower(USER_AGENT),string.lower(rule),"jo") then
-                    log_record("Deny_USER_AGENT",ngx.var.request_uri,"-",rule)                    
+                    log_record("Deny_User_Agent",ngx.var.request_uri,"-",rule)
                     if config_waf_enable == "on" then
                         waf_output()
                         return true
@@ -201,12 +200,11 @@ end
 function post_attack_check()
     if config_post_check == "on" then
         local POST_RULES = get_rule("post")
-		ngx.req.read_body()        
 		for _,rule in pairs(POST_RULES) do			
             -- local REQ_POST = ngx.req.get_post_args()
 			local REQ_POST, err = ngx.req.get_post_args()
 			if err == "truncated" then								
-				log_record("DENY_POST_MANY",ngx.var.request_uri,"-",rule)				
+				log_record("Deny_POST_Many",ngx.var.request_uri,"-",rule)
 				if config_waf_enable == "on" then
 					waf_output()
 					return true

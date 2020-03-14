@@ -72,15 +72,25 @@ function log_record(method,url,data,ruletag)
 end
 
 -- test log
-function write(logfile, msg)
-    local fd,err = io.open(logfile,"a+")
-    if fd == nil then
-        ngx.log(ngx.ERR,"writefile msg : "..msg,err)
+function test_log_record(data)
+    local cjson = require("cjson")
+    local io = require "io"
+    local LOG_PATH = config_log_dir
+    local CLIENT_IP = get_client_ip()
+    local LOCAL_TIME = ngx.localtime()
+    local log_json_obj = {
+                 client_ip = CLIENT_IP,
+                 req_data = data,
+              }
+    local LOG_LINE = cjson.encode(log_json_obj)
+    local LOG_NAME = LOG_PATH..'/'.."test.log"
+    local file = io.open(LOG_NAME,"a")
+    if file == nil then
         return
     end
-    fd:write(msg)
-    fd:flush()
-    fd:close()
+    file:write(LOG_LINE.."\n")
+    file:flush()
+    file:close()
 end
 
 -- WAF return

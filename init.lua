@@ -160,6 +160,8 @@ function url_args_attack_check()
             for key, val in pairs(REQ_ARGS) do
                 if type(val) == "table" then
                     ARGS_DATA = string.lower(table.concat(val, " "))
+                elseif type(val) == "boolean" then
+                    ARGS_DATA = nil
                 else
                     ARGS_DATA = string.lower(val)
                 end
@@ -198,7 +200,7 @@ end
 
 -- deny post
 function post_attack_check()
-    if config_post_check == "on" then
+    if config_post_check == "on" and ngx.var.request_method == "POST" then
         local POST_RULES = get_rule("post")
 		for _,rule in pairs(POST_RULES) do			
             -- local REQ_POST = ngx.req.get_post_args()
@@ -206,17 +208,19 @@ function post_attack_check()
 			if err == "truncated" then								
 				log_record("Deny_POST_Many",ngx.var.request_uri,"-",rule)
 				if config_waf_enable == "on" then
-					waf_output()
+				    waf_output()
 					return true
 				end
 			end
             for key, val in pairs(REQ_POST) do
                 if type(val) == "table" then
                     POST_DATA = string.lower(table.concat(val, " "))
+                elseif type(val) == "boolean" then
+                    POST_DATA = nil
                 else
                     POST_DATA = string.lower(val)
                 end
-                if POST_DATA and type(POST_DATA) ~= "boolean" and rule ~="" and rulematch(unescape(POST_DATA),string.lower(rule),"jo") then
+                if POST_DATA and rule ~="" and rulematch(unescape(POST_DATA),string.lower(rule),"jo") then
                     log_record("Deny_POST",ngx.var.request_uri,"-",rule)                    
                     if config_waf_enable == "on" then
                         waf_output()

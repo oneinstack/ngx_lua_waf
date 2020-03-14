@@ -119,8 +119,8 @@ function cookie_attack_check()
                         return true
                     end
                 end
-             end
-		end
+            end
+        end
     end
     return false
 end
@@ -149,14 +149,14 @@ function url_args_attack_check()
         local ARGS_RULES = get_rule('args')
         for _,rule in pairs(ARGS_RULES) do
             --local REQ_ARGS = ngx.req.get_uri_args()
-			local REQ_ARGS, err = ngx.req.get_uri_args()
-			if err == "truncated" then				
-				log_record("Deny_URL_Args_Many",ngx.var.request_uri,"-",rule)
-				if config_waf_enable == "on" then
-					waf_output()
-					return true
-				end
-			end
+            local REQ_ARGS, err = ngx.req.get_uri_args()
+            if err == "truncated" then
+                log_record("Deny_URL_Args_Many",ngx.var.request_uri,"-",rule)
+                if config_waf_enable == "on" then
+                    waf_output()
+                    return true
+                end
+            end
             for key, val in pairs(REQ_ARGS) do
                 if type(val) == "table" then
                     ARGS_DATA = string.lower(table.concat(val, " "))
@@ -204,14 +204,14 @@ function post_attack_check()
         local POST_RULES = get_rule("post")
 		for _,rule in pairs(POST_RULES) do			
             -- local REQ_POST = ngx.req.get_post_args()
-			local REQ_POST, err = ngx.req.get_post_args()
-			if err == "truncated" then								
-				log_record("Deny_POST_Many",ngx.var.request_uri,"-",rule)
-				if config_waf_enable == "on" then
-				    waf_output()
-					return true
-				end
-			end
+            local REQ_POST, err = ngx.req.get_post_args()
+            if err == "truncated" then
+                log_record("Deny_POST_Many",ngx.var.request_uri,"-",rule)
+                if config_waf_enable == "on" then
+                    waf_output()
+                    return true
+                end
+            end
             for key, val in pairs(REQ_POST) do
                 if type(val) == "table" then
                     POST_DATA = string.lower(table.concat(val, " "))

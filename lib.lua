@@ -51,15 +51,15 @@ function log_record(method,url,data,ruletag)
     local SERVER_NAME = ngx.var.host
     local LOCAL_TIME = ngx.localtime()
     local log_json_obj = {
-                 client_ip = CLIENT_IP,
-                 local_time = LOCAL_TIME,
-                 server_name = SERVER_NAME,
-                 req_url = url,
-                 attack_method = method,
-                 req_data = data,
-                 rule_tag = ruletag,
-                 user_agent = USER_AGENT,
-              }
+        client_ip = CLIENT_IP,
+        local_time = LOCAL_TIME,
+        server_name = SERVER_NAME,
+        req_url = url,
+        attack_method = method,
+        req_data = data,
+        rule_tag = ruletag,
+        user_agent = USER_AGENT,
+        }
     local LOG_LINE = cjson.encode(log_json_obj)
     local LOG_NAME = LOG_PATH..'/'..ngx.today().."_sec.log"
     local file = io.open(LOG_NAME,"a")
@@ -79,9 +79,9 @@ function test_log_record(data)
     local CLIENT_IP = get_client_ip()
     local LOCAL_TIME = ngx.localtime()
     local log_json_obj = {
-                 client_ip = CLIENT_IP,
-                 req_data = data,
-              }
+            client_ip = CLIENT_IP,
+            req_data = data,
+        }
     local LOG_LINE = cjson.encode(log_json_obj)
     local LOG_NAME = LOG_PATH..'/'.."test.log"
     local file = io.open(LOG_NAME,"a")

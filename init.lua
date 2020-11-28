@@ -199,30 +199,88 @@ end
 
 -- deny post
 function post_attack_check()
-    if config_post_check == "on" then
+    if config_post_check == "on" and ngx.var.request_method == "POST" then
         local POST_RULES = get_rule("post")
-		ngx.req.read_body()        
-		for _,rule in pairs(POST_RULES) do			
-            -- local REQ_POST = ngx.req.get_post_args()
-			local REQ_POST, err = ngx.req.get_post_args()
-			if err == "truncated" then								
-				log_record("DENY_POST_MANY",ngx.var.request_uri,"-",rule)				
-				if config_waf_enable == "on" then
-					waf_output()
-					return true
-				end
-			end
-            for key, val in pairs(REQ_POST) do
-                if type(val) == "table" then
-                    POST_DATA = string.lower(table.concat(val, " "))
-                else
-                    POST_DATA = string.lower(val)
+        local receive_headers = ngx.req.get_headers()
+        for _,rule in pairs(POST_RULES) do
+            ngx.req.read_body()
+            if string.sub(receive_headers["content-type"],1,20) == "multipart/form-data;" then
+                local body_data = ngx.req.get_body_data()
+                content_type = receive_headers["content-type"]
+                if not body_data then
+                    local body_data_file = ngx.req.get_body_file()
+                    if body_data_file then
+                        local fh, err = io.open(body_data_file,"r")
+                        if fh then
+                            fh:seek("set")
+                            body_data = fh:read("*a")
+                            fh:close()
+                        end
+                    end
                 end
-                if POST_DATA and type(POST_DATA) ~= "boolean" and rule ~="" and rulematch(unescape(POST_DATA),string.lower(rule),"jo") then
-                    log_record("Deny_POST",ngx.var.request_uri,"-",rule)                    
+                bi, bj = string.find(content_type, 'boundary=')
+                boundary = string.sub(content_type, bj+1)
+                if body_data ~= "" and boundary ~= "" then
+                    boundary = '--'..boundary
+                    body_data = string.gsub(body_data, "\r", "")
+                    body_data = string.gsub(body_data, "\n", "")
+                    body_data = string.gsub(body_data, "\t", "")
+                    local table_body_data = {}
+                    local i = 0
+                    local b = string.len(boundary)
+                    while true do
+                        x = i + b + 1;
+                        i,j = string.find(body_data, boundary, i + b + 1)
+                        if i == nil then break end
+                        body = string.sub(body_data, x, i-1)
+                        table.insert(table_body_data, body)
+                    end                
+                    for key, val in pairs(table_body_data) do
+                        if type(val) == "table" then
+                            POST_DATA = string.lower(table.concat(val, " "))
+                        elseif type(val) == "boolean" then
+                            POST_DATA = nil
+                        else
+                            POST_DATA = string.lower(val)
+                        end
+                        if POST_DATA and rule ~="" and rulematch(unescape(POST_DATA),string.lower(rule),"jo") then
+                            log_record("Deny__MULTIPART_POST",ngx.var.request_uri,"-",rule) 
+                            if config_waf_enable == "on" then
+                                waf_output()
+                                return true
+                            end
+                        end
+                    end
+                else
+                    log_record("Deny__MULTIPART_POST",ngx.var.request_uri,"Empty",rule)
                     if config_waf_enable == "on" then
                         waf_output()
                         return true
+                    end
+                end
+            else
+                local REQ_POST, err = ngx.req.get_post_args()
+                if err == "truncated" then
+                    log_record("DENY_POST_MANY",ngx.var.request_uri,"-",rule)
+                    if config_waf_enable == "on" then
+                        waf_output()
+                        return true
+                    end
+                end
+                for key, val in pairs(REQ_POST) do
+                    if type(val) == "table" then
+                        POST_DATA = string.lower(table.concat(val, " "))
+                    elseif type(val) == "boolean" then
+                        POST_DATA = nil
+                    else
+                        POST_DATA = string.lower(val)
+                    end
+                    if POST_DATA and rule ~="" and rulematch(unescape(POST_DATA),string.lower(rule),"jo") then
+                        log_record("Deny_POST",ngx.var.request_uri,"-",rule)
+                        if config_waf_enable == "on" then
+                            waf_output()
+                            return true
+                        end
                     end
                 end
             end

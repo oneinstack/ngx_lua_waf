@@ -13,8 +13,37 @@ function white_ip_check()
         local WHITE_IP = get_client_ip()
         if IP_WHITE_RULE ~= nil then
             for _,rule in pairs(IP_WHITE_RULE) do
-                if rule ~= "" and rulematch(WHITE_IP,rule,"jo") then
-                    log_record("White_IP",ngx.var.request_uri,"_","_")
+                if rule ~= "" then
+                    RULE_IP_START = 9999999999
+                    RULE_IP_END = 9999999999
+                    if string.find(rule, ",") then
+                        local s,l = string.find(rule, ",")
+                        local num = 0
+                        num = l - 1
+                        RULE_IP_START = ipToInt(string.sub(rule, 1, num))
+                        num = l + 1
+                        RULE_IP_END = ipToInt(string.sub(rule, num))
+                    elseif string.find(rule, "/") then
+                        local s,l = string.find(rule, "/")
+                        local num = 0
+                        num = l - 1
+                        RULE_IP = string.sub(rule, 1, num)
+                        num = l + 1
+                        RULE_END = string.sub(rule, num)
+                        RULE_IP_START = ipToInt(subnet(RULE_IP, RULE_END))
+                        if tonumber(RULE_END) ~= '' and tonumber(RULE_END) < 32 then
+                            RULE_IP_END = RULE_IP_START + 2^(32 - RULE_END) - 1
+                        else
+                            RULE_IP_END = RULE_IP_START
+                        end
+                    elseif (rule ~= 'unknown') then
+                        RULE_IP_START = ipToInt(rule)
+                        RULE_IP_END = RULE_IP_START
+                    end
+                end
+                local Num_White_IP = ipToInt(get_client_ip())
+                if rule ~= "" and RULE_IP_START <= Num_White_IP and Num_White_IP <= RULE_IP_END then
+                    log_record("White_IP",ngx.var.request_uri,"_",rule)           
                     return true
                 end
             end
@@ -29,7 +58,36 @@ function black_ip_check()
         local BLACK_IP = get_client_ip()
         if IP_BLACK_RULE ~= nil then
             for _,rule in pairs(IP_BLACK_RULE) do
-                if rule ~= "" and rulematch(BLACK_IP,rule,"jo") then
+                if rule ~= "" then
+                    RULE_IP_START = 9999999999
+                    RULE_IP_END = 9999999999
+                    if string.find(rule, ",") then
+                        local s,l = string.find(rule, ",")
+                        local num = 0
+                        num = l - 1
+                        RULE_IP_START = ipToInt(string.sub(rule, 1, num))
+                        num = l + 1                        
+                        RULE_IP_END = ipToInt(string.sub(rule, num))                        
+                    elseif string.find(rule, "/") then
+                        local s,l = string.find(rule, "/")
+                        local num = 0
+                        num = l - 1                        
+                        RULE_IP = string.sub(rule, 1, num)
+                        num = l + 1                        
+                        RULE_END = string.sub(rule, num)                        
+                        RULE_IP_START = ipToInt(subnet(RULE_IP, RULE_END))
+                        if tonumber(RULE_END) ~= '' and tonumber(RULE_END) < 32 then
+                            RULE_IP_END = RULE_IP_START + 2^(32 - RULE_END) - 1
+                        else 
+                            RULE_IP_END = RULE_IP_START
+                        end
+                    elseif (rule ~= 'unknown') then
+                        RULE_IP_START = ipToInt(rule)
+                        RULE_IP_END = RULE_IP_START                        
+                    end                    
+                end
+                local Num_Black_IP = ipToInt(get_client_ip())
+                if rule ~= "" and RULE_IP_START <= Num_Black_IP and Num_Black_IP <= RULE_IP_END then
                     -- log_record('BlackList_IP',ngx.var.request_uri,"_","_")                    
                     if config_waf_enable == "on" then
                         ngx.header.content_type = "text/html"

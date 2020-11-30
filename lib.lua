@@ -94,3 +94,40 @@ function waf_output()
         ngx.exit(ngx.status)
     end
 end
+
+-- ip to inter
+function ipToInt(str)
+    local num = 0
+    if str and type(str)=="string" then
+        local o1,o2,o3,o4 = str:match("(%d+)%.(%d+)%.(%d+)%.(%d+)" )
+        num = 2^24*o1 + 2^16*o2 + 2^8*o3 + o4
+    end
+    return num
+end
+
+-- inter to ip
+function intToIp(n)
+    if n then
+        n = tonumber(n)
+        local n1 = math.floor(n / (2^24)) 
+        local n2 = math.floor((n - n1*(2^24)) / (2^16))
+        local n3 = math.floor((n - n1*(2^24) - n2*(2^16)) / (2^8))
+        local n4 = math.floor((n - n1*(2^24) - n2*(2^16) - n3*(2^8)))
+        return n1.."."..n2.."."..n3.."."..n4 
+    end
+    return "0.0.0.0"
+end
+
+-- subnet
+function subnet(ip, masklen)    
+    if masklen == 32 then 
+        return ip 
+    end
+    local ip = {string.match(ip, "(%d+).(%d+).(%d+).(%d+)")}
+    local pos = math.floor((masklen)/8) + 1
+    ip[pos] =  ip[pos] - ip[pos] % 2^(8-masklen%8)
+    for i = pos + 1, #ip do
+        ip[i] = 0
+    end
+    return table.concat(ip, ".")
+end

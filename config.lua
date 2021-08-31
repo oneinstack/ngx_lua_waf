@@ -66,12 +66,12 @@ config_waf_captcha_html=[[
 		<script>
 			let captcha_id = ''
 			var url = 'https://oneinstack.com/api/v1/captcha'
-			var urlimg = 'https://oneinstack.com/api/v1/'
+			var urlimg = 'https://oneinstack.com/api/v1'
 			// 获取验证码 hash
 			getImg()
 			function getImg() {
 				$.get(url).then((res) => {
-					$('#captcha-img').attr('src', urlimg + '/' + res.data.image_url)
+					$('#captcha-img').attr('src', urlimg + res.data.image_url)
 					$('#captcha-id').val(res.data.captcha_id)
 				})				
 			}
